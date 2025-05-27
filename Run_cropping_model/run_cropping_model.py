@@ -1,45 +1,126 @@
 import cv2
 import numpy as np
 from ultralytics import YOLO
-import matplotlib.pyplot as plt
-from tkinter import Tk, filedialog
+import os
 
-# Buka file dialog untuk pilih gambar
-Tk().withdraw()  # Sembunyikan jendela utama Tkinter
-img_path = filedialog.askopenfilename(title="Pilih Gambar")
+def crop_conjunctiva(image_path: str, model_path: str = "best.pt"):
+    """
+    Crop and segment conjunctiva from an image using YOLO model
 
-# Load model
-model = YOLO("best.pt")  # ganti path model kamu
+    Args:
+        image_path (str): Path to the input image
+        model_path (str): Path to the YOLO model file
 
-# Inference
-results = model(img_path, save=False, verbose=False)[0]
+    Returns:
+        tuple: (success: bool, cropped_image: np.ndarray or None, message: str)
+    """
+    try:
+        # Load model
+        model = YOLO(model_path)
 
-# Baca gambar asli
-img = cv2.imread(img_path)
+        # Inference
+        results = model(image_path, save=False, verbose=False)[0]
 
-found = False
-for j, mask in enumerate(results.masks.data):
-    class_id = int(results.boxes.cls[j].item())
-    if model.names[class_id] != 'conjunctiva':
-        continue
+        # Read original image
+        img = cv2.imread(image_path)
+        if img is None:
+            return False, None, "Failed to read image"
 
-    found = True
-    binary_mask = mask.cpu().numpy().astype(np.uint8) * 255
-    x, y, w, h = cv2.boundingRect(binary_mask)
-    img_crop = img[y:y+h, x:x+w]
-    mask_crop = binary_mask[y:y+h, x:x+w]
-    segmented = cv2.bitwise_and(img_crop, img_crop, mask=mask_crop)
-    
-    filename = f"hasil_conj_{j}.png"
-    cv2.imwrite(filename, segmented)
+        # Process results
+        found = False
+        cropped_img = None
 
-    # Tampilkan hasil
-    plt.figure()
-    plt.imshow(cv2.cvtColor(segmented, cv2.COLOR_BGR2RGB))
-    plt.title(f"Hasil Segmentasi Konjungtiva {j+1}")
-    plt.axis('off')
+        for j, mask in enumerate(results.masks.data):
+            class_id = int(results.boxes.cls[j].item())
+            if model.names[class_id] != 'conjunctiva':
+                continue
 
-if not found:
-    print("Tidak ditemukan kelas 'conjunctiva' pada gambar.")
-else:
-    plt.show()
+            found = True
+            binary_mask = mask.cpu().numpy().astype(np.uint8) * 255
+            x, y, w, h = cv2.boundingRect(binary_mask)
+            img_crop = img[y:y+h, x:x+w]
+            mask_crop = binary_mask[y:y+h, x:x+w]
+            segmented = cv2.bitwise_and(img_crop, img_crop, mask=mask_crop)
+            cropped_img = segmented
+            break  # Use the first conjunctiva found
+
+        if not found:
+            return False, None, "No conjunctiva found in the image"
+
+        return True, cropped_img, "Conjunctiva successfully cropped"
+
+    except Exception as e:
+        return False, None, f"Error processing image: {str(e)}"
+
+def crop_conjunctiva_from_array(image_array: np.ndarray, model_path: str = "best.pt"):
+    """
+    Crop and segment conjunctiva from an image array using YOLO model
+
+    Args:
+        image_array (np.ndarray): Input image as numpy array
+        model_path (str): Path to the YOLO model file
+
+    Returns:
+        tuple: (success: bool, cropped_image: np.ndarray or None, message: str)
+    """
+    try:
+        # Load model
+        model = YOLO(model_path)
+
+        # Inference directly on array
+        results = model(image_array, save=False, verbose=False)[0]
+
+        # Process results
+        found = False
+        cropped_img = None
+
+        for j, mask in enumerate(results.masks.data):
+            class_id = int(results.boxes.cls[j].item())
+            if model.names[class_id] != 'conjunctiva':
+                continue
+
+            found = True
+            binary_mask = mask.cpu().numpy().astype(np.uint8) * 255
+            x, y, w, h = cv2.boundingRect(binary_mask)
+            img_crop = image_array[y:y+h, x:x+w]
+            mask_crop = binary_mask[y:y+h, x:x+w]
+            segmented = cv2.bitwise_and(img_crop, img_crop, mask=mask_crop)
+            cropped_img = segmented
+            break  # Use the first conjunctiva found
+
+        if not found:
+            return False, None, "No conjunctiva found in the image"
+
+        return True, cropped_img, "Conjunctiva successfully cropped"
+
+    except Exception as e:
+        return False, None, f"Error processing image: {str(e)}"
+
+# For backward compatibility and standalone usage
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+    from tkinter import Tk, filedialog
+
+    # Open file dialog to select image
+    Tk().withdraw()  # Hide main Tkinter window
+    img_path = filedialog.askopenfilename(title="Pilih Gambar")
+
+    if img_path:
+        success, cropped_img, message = crop_conjunctiva(img_path, "best.pt")
+
+        if success:
+            # Save result
+            filename = "hasil_conjunctiva_cropped.png"
+            cv2.imwrite(filename, cropped_img)
+            print(f"Result saved as {filename}")
+
+            # Display result
+            plt.figure()
+            plt.imshow(cv2.cvtColor(cropped_img, cv2.COLOR_BGR2RGB))
+            plt.title("Hasil Segmentasi Konjungtiva")
+            plt.axis('off')
+            plt.show()
+        else:
+            print(f"Error: {message}")
+    else:
+        print("No image selected")

@@ -3,9 +3,9 @@ import uvicorn
 import shutil
 import os
 from Run_detection_model.run_detection_model import predict_image
+from Run_cropping_model.run_cropping_model import crop_conjunctiva
 from typing import Optional
 import tempfile
-from ultralytics import YOLO
 import cv2
 import numpy as np
 import io
@@ -55,9 +55,6 @@ DETECTION_MODEL_GDRIVE_ID = "YOUR_DETECTION_MODEL_FILE_ID"  # Replace with actua
 download_model_from_gdrive(CROP_MODEL_GDRIVE_ID, "Run_cropping_model/best.pt")
 download_model_from_gdrive(DETECTION_MODEL_GDRIVE_ID, "Run_detection_model/model.h5")
 
-# Load YOLO model once when app starts
-crop_model = YOLO("Run_cropping_model/best.pt")
-
 @app.post("/detect/")
 async def detect(file: UploadFile = File(...)):
     """
@@ -77,7 +74,7 @@ async def detect(file: UploadFile = File(...)):
     return result
 
 @app.post("/crop/")
-async def crop_conjunctiva(file: UploadFile = File(...)):
+async def crop_conjunctiva_endpoint(file: UploadFile = File(...)):
     """
     Crop and segment conjunctiva from an image
     """
@@ -86,43 +83,29 @@ async def crop_conjunctiva(file: UploadFile = File(...)):
         shutil.copyfileobj(file.file, temp_file)
         temp_path = temp_file.name
 
-    # Run YOLO model
-    results = crop_model(temp_path, save=False, verbose=False)[0]
+    try:
+        # Use the proper cropping function
+        success, cropped_img, message = crop_conjunctiva(temp_path, "Run_cropping_model/best.pt")
 
-    # Read original image
-    img = cv2.imread(temp_path)
+        # Clean up
+        os.unlink(temp_path)
 
-    # Process results
-    found = False
-    cropped_img = None
+        if not success:
+            return Response(content=message, status_code=404)
 
-    for j, mask in enumerate(results.masks.data):
-        class_id = int(results.boxes.cls[j].item())
-        if crop_model.names[class_id] != 'conjunctiva':
-            continue
+        # Convert image to bytes
+        is_success, buffer = cv2.imencode(".png", cropped_img)
+        if not is_success:
+            return Response(content="Failed to encode image", status_code=500)
 
-        found = True
-        binary_mask = mask.cpu().numpy().astype(np.uint8) * 255
-        x, y, w, h = cv2.boundingRect(binary_mask)
-        img_crop = img[y:y+h, x:x+w]
-        mask_crop = binary_mask[y:y+h, x:x+w]
-        segmented = cv2.bitwise_and(img_crop, img_crop, mask=mask_crop)
-        cropped_img = segmented
-        break  # Just use the first conjunctiva found
+        # Return the image directly
+        return Response(content=buffer.tobytes(), media_type="image/png")
 
-    # Clean up
-    os.unlink(temp_path)
-
-    if not found:
-        return Response(content="No conjunctiva found in the image", status_code=404)
-
-    # Convert image to bytes
-    is_success, buffer = cv2.imencode(".png", cropped_img)
-    if not is_success:
-        return Response(content="Failed to encode image", status_code=500)
-
-    # Return the image directly
-    return Response(content=buffer.tobytes(), media_type="image/png")
+    except Exception as e:
+        # Clean up in case of error
+        if os.path.exists(temp_path):
+            os.unlink(temp_path)
+        return Response(content=f"Error processing image: {str(e)}", status_code=500)
 
 @app.get("/")
 async def root():
