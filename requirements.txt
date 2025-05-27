@@ -17,6 +17,9 @@ matplotlib==3.8.2
 # File Handling
 python-multipart==0.0.6
 
+# HTTP Requests
+requests==2.31.0
+
 # Optional: For better performance
 # torch==2.1.1  # If you want to use PyTorch backend for YOLO
 # torchvision==0.16.1
