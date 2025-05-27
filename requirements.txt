@@ -1,0 +1,22 @@
+# Web Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Machine Learning & Deep Learning
+tensorflow==2.15.0
+ultralytics==8.0.196
+
+# Computer Vision & Image Processing
+opencv-python==4.8.1.78
+Pillow==10.1.0
+
+# Data Processing
+numpy==1.24.3
+matplotlib==3.8.2
+
+# File Handling
+python-multipart==0.0.6
+
+# Optional: For better performance
+# torch==2.1.1  # If you want to use PyTorch backend for YOLO
+# torchvision==0.16.1
