@@ -18,47 +18,21 @@ app = FastAPI(
     version="1.0.0"
 )
 
-def download_model_from_gdrive(file_id: str, destination: str):
-    """Download model from Google Drive"""
-    if os.path.exists(destination):
-        print(f"Model already exists at {destination}")
-        return
-
-    print(f"Downloading model to {destination}...")
-    os.makedirs(os.path.dirname(destination), exist_ok=True)
-
-    URL = "https://docs.google.com/uc?export=download"
-    session = requests.Session()
-
-    response = session.get(URL, params={'id': file_id}, stream=True)
-    token = None
-    for key, value in response.cookies.items():
-        if key.startswith('download_warning'):
-            token = value
-            break
-
-    if token:
-        params = {'id': file_id, 'confirm': token}
-        response = session.get(URL, params=params, stream=True)
-
-    with open(destination, "wb") as f:
-        for chunk in response.iter_content(chunk_size=32768):
-            if chunk:
-                f.write(chunk)
-    print(f"Model downloaded successfully to {destination}")
-
-# Model file IDs from Google Drive (you'll need to replace these)
-CROP_MODEL_GDRIVE_ID = "YOUR_CROP_MODEL_FILE_ID"  # Replace with actual file ID
-DETECTION_MODEL_GDRIVE_ID = "1SFg3iONtsZaYQ3O8lNbcEz99Rcld0TjZ"  # Replace with actual file ID
-
-# Download models if they don't exist
+# Load models
 CROP_MODEL_PATH = "Run_cropping_model/best.pt"
 DETECTION_MODEL_PATH = "Run_detection_model/model.h5"
 
-download_model_from_gdrive(CROP_MODEL_GDRIVE_ID, CROP_MODEL_PATH)
-download_model_from_gdrive(DETECTION_MODEL_GDRIVE_ID, DETECTION_MODEL_PATH)
+# Check if models exist, otherwise remind user to download
+if not os.path.exists(CROP_MODEL_PATH):
+    print(f"Error: Cropping model not found at {CROP_MODEL_PATH}")
+    print("Please check download_model.txt for instructions on how to download the models.")
+    exit()
 
-# Load models after ensuring they are downloaded
+if not os.path.exists(DETECTION_MODEL_PATH):
+    print(f"Error: Detection model not found at {DETECTION_MODEL_PATH}")
+    print("Please check download_model.txt for instructions on how to download the models.")
+    exit()
+
 load_cropping_model(CROP_MODEL_PATH)
 load_detection_model(DETECTION_MODEL_PATH)
 

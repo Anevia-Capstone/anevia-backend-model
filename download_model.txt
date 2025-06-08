@@ -1,0 +1,17 @@
+To download the necessary models, please use `wget` or `curl` with the following links:
+
+For the cropping model (best.pt):
+wget --no-check-certificate "https://docs.google.com/uc?export=download&id=1dNTDysdW1mnBebKtEbWwx2RqXOEbBHma" -O Run_cropping_model/best.pt
+
+For the detection model (model.h5):
+wget --no-check-certificate "https://docs.google.com/uc?export=download&id=1a3wyUIO_S8NXc3tJbksF_prR1CCkLMvg" -O Run_detection_model/model.h5
+
+Alternatively, you can use `gdown` if you have it installed:
+pip install gdown
+
+gdown --id 1dNTDysdW1mnBebKtEbWwx2RqXOEbBHma -O Run_cropping_model/best.pt
+gdown --id 1a3wyUIO_S8NXc3tJbksF_prR1CCkLMvg -O Run_detection_model/model.h5
+
+Make sure to place the downloaded files in their respective directories:
+- Run_cropping_model/best.pt
+- Run_detection_model/model.h5
