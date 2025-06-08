@@ -2,8 +2,8 @@ from fastapi import FastAPI, UploadFile, File, Response
 import uvicorn
 import shutil
 import os
-from Run_detection_model.run_detection_model import predict_image
-from Run_cropping_model.run_cropping_model import crop_conjunctiva
+from Run_detection_model.run_detection_model import predict_image, load_detection_model
+from Run_cropping_model.run_cropping_model import crop_conjunctiva, load_cropping_model
 from typing import Optional
 import tempfile
 import cv2
@@ -49,11 +49,18 @@ def download_model_from_gdrive(file_id: str, destination: str):
 
 # Model file IDs from Google Drive (you'll need to replace these)
 CROP_MODEL_GDRIVE_ID = "YOUR_CROP_MODEL_FILE_ID"  # Replace with actual file ID
-DETECTION_MODEL_GDRIVE_ID = "YOUR_DETECTION_MODEL_FILE_ID"  # Replace with actual file ID
+DETECTION_MODEL_GDRIVE_ID = "1SFg3iONtsZaYQ3O8lNbcEz99Rcld0TjZ"  # Replace with actual file ID
 
 # Download models if they don't exist
-download_model_from_gdrive(CROP_MODEL_GDRIVE_ID, "Run_cropping_model/best.pt")
-download_model_from_gdrive(DETECTION_MODEL_GDRIVE_ID, "Run_detection_model/model.h5")
+CROP_MODEL_PATH = "Run_cropping_model/best.pt"
+DETECTION_MODEL_PATH = "Run_detection_model/model.h5"
+
+download_model_from_gdrive(CROP_MODEL_GDRIVE_ID, CROP_MODEL_PATH)
+download_model_from_gdrive(DETECTION_MODEL_GDRIVE_ID, DETECTION_MODEL_PATH)
+
+# Load models after ensuring they are downloaded
+load_cropping_model(CROP_MODEL_PATH)
+load_detection_model(DETECTION_MODEL_PATH)
 
 @app.post("/detect/")
 async def detect(file: UploadFile = File(...)):
@@ -113,5 +120,3 @@ async def root():
 
 if __name__ == "__main__":
     uvicorn.run("app:app", host="localhost", port=8000, reload=True)
-
-

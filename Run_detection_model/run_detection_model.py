@@ -9,9 +9,16 @@ from tensorflow.keras.models import load_model
 # establish available classes for prediction and image size for input shape
 class_names = ["Anemic", "Non-Anemic"]
 img_size = (224, 224)
-# Use absolute path for model loading to ensure it works from any directory
-model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model.h5")
-detection_model = load_model(model_path)
+# Global variable for the detection model
+detection_model = None
+
+def load_detection_model(model_path_arg: str):
+    """Load the detection model from the specified path."""
+    global detection_model
+    if detection_model is None:
+        print(f"Loading detection model from {model_path_arg}...")
+        detection_model = load_model(model_path_arg)
+        print("Detection model loaded.")
 
 # Process the input image prior to model inference
 def load_and_preprocess_image(path):
@@ -24,6 +31,8 @@ def load_and_preprocess_image(path):
     return np.expand_dims(img, axis=0), img
 
 def predict_image(image_path):
+    if detection_model is None:
+        raise RuntimeError("Detection model not loaded. Call load_detection_model first.")
     input_img, _ = load_and_preprocess_image(image_path)
     prediction = detection_model.predict(input_img)
     pred_class = class_names[np.argmax(prediction)]
@@ -40,6 +49,10 @@ def predict_image(image_path):
     return result
 
 if __name__ == "__main__":
+    # For standalone usage, load the model
+    model_path_local = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model.h5")
+    load_detection_model(model_path_local)
+
     # Check if image path is provided as argument
     if len(sys.argv) > 1:
         image_path = sys.argv[1]

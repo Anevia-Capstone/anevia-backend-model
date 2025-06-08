@@ -3,6 +3,17 @@ import numpy as np
 from ultralytics import YOLO
 import os
 
+# Global variable for the cropping model
+cropping_model = None
+
+def load_cropping_model(model_path_arg: str):
+    """Load the cropping model from the specified path."""
+    global cropping_model
+    if cropping_model is None:
+        print(f"Loading cropping model from {model_path_arg}...")
+        cropping_model = YOLO(model_path_arg)
+        print("Cropping model loaded.")
+
 def crop_conjunctiva(image_path: str, model_path: str = "best.pt"):
     """
     Crop and segment conjunctiva from an image using YOLO model
@@ -15,11 +26,11 @@ def crop_conjunctiva(image_path: str, model_path: str = "best.pt"):
         tuple: (success: bool, cropped_image: np.ndarray or None, message: str)
     """
     try:
-        # Load model
-        model = YOLO(model_path)
+        if cropping_model is None:
+            raise RuntimeError("Cropping model not loaded. Call load_cropping_model first.")
 
         # Inference
-        results = model(image_path, save=False, verbose=False)[0]
+        results = cropping_model(image_path, save=False, verbose=False)[0]
 
         # Read original image
         img = cv2.imread(image_path)
@@ -64,11 +75,11 @@ def crop_conjunctiva_from_array(image_array: np.ndarray, model_path: str = "best
         tuple: (success: bool, cropped_image: np.ndarray or None, message: str)
     """
     try:
-        # Load model
-        model = YOLO(model_path)
+        if cropping_model is None:
+            raise RuntimeError("Cropping model not loaded. Call load_cropping_model first.")
 
         # Inference directly on array
-        results = model(image_array, save=False, verbose=False)[0]
+        results = cropping_model(image_array, save=False, verbose=False)[0]
 
         # Process results
         found = False
@@ -101,12 +112,16 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     from tkinter import Tk, filedialog
 
+    # For standalone usage, load the model
+    model_path_local = os.path.join(os.path.dirname(os.path.abspath(__file__)), "best.pt")
+    load_cropping_model(model_path_local)
+
     # Open file dialog to select image
     Tk().withdraw()  # Hide main Tkinter window
     img_path = filedialog.askopenfilename(title="Pilih Gambar")
 
     if img_path:
-        success, cropped_img, message = crop_conjunctiva(img_path, "best.pt")
+        success, cropped_img, message = crop_conjunctiva(img_path, model_path_local)
 
         if success:
             # Save result
