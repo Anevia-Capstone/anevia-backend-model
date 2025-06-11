@@ -1,21 +1,13 @@
 # Web Framework
 fastapi
 uvicorn
-
-# Machine Learning & Deep Learning
 tensorflow
-ultralytics
-
-# Computer Vision & Image Processing
-opencv-python
 Pillow
-
-# Data Processing
-numpy
 matplotlib
-
-# File Handling
 python-multipart
-
-# HTTP Requests
 requests
+torch
+torchvision
+opencv-python==4.11.0.86
+numpy==2.0.2
+albumentations==2.0.8
