@@ -1,13 +1,13 @@
-# Web Framework and API dependencies
-fastapi>=0.68.0
-uvicorn>=0.15.0
-python-multipart>=0.0.5
-
-# Machine Learning and Image Processing
-tensorflow>=2.0.0
-torch>=1.9.0
-torchvision>=0.10.0
-opencv-python>=4.5.0
-pillow>=8.0.0
-numpy>=1.19.0
-albumentations>=1.0.0
+# Web Framework
+fastapi
+uvicorn
+tensorflow
+Pillow
+matplotlib
+python-multipart
+requests
+torch
+torchvision
+opencv-python==4.11.0.86
+numpy==2.0.2
+albumentations==2.0.8

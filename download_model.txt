@@ -1,7 +1,7 @@
 pip install gdown
 
-gdown --id 1zQSGKookDY1Yr8lMLKx0kmr6KqMgdTa0 -O Run_cropping_model/ModelSegmentasi.pt
-gdown --id 1GNLZdDpiDi_1pQ3zwSQ1GeFjQ1YoXNne -O Run_detection_model/model.h5
+gdown 14UvMn7lodqtYaienYaR7oOLN-mbvvHIh -O Run_cropping_model/ModelSegmentasi.pt
+gdown 1GNLZdDpiDi_1pQ3zwSQ1GeFjQ1YoXNne -O Run_detection_model/model.h5
 
 Make sure to place the downloaded files in their respective directories:
 - Run_cropping_model/ModelSegmentasi.pt
